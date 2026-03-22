@@ -1,0 +1,56 @@
+Use case
+
+My internet connection has recurring hiccups — every day around 15:30, all devices on your network simultaneously lose their connections. Online games crashes, PS5 games disconnect, Discord drops, streaming stops. But your router keeps running, Wi-Fi never drops, and a standard connectivity check shows nothing wrong.
+
+What was discovered
+The root cause is a NAT state table flush on upstream equipment in Delta Fiber's network. Here's why standard tools miss it:
+
+A ping test or browser opens a new connection each time → gets a fresh NAT entry → works fine
+Online games, PS5 games, streaming all hold one long-lived connection open for hours → when the NAT table is flushed, that entry is wiped → connection silently dies
+
+The flush lasts 5–7 seconds on the bad events. That's long enough to kill everything.
+
+What we built — the tool suite
+You now have three Python scripts that work together:
+netwatch.py — the monitor
+
+Runs continuously and watches for the problem using two parallel strategies:
+
+Strategy 1 — Fresh-connect probe (every 100ms)
+Opens a new TCP connection to rotating DNS servers (Google, Cloudflare, OpenDNS). Catches full outages. Deliberately uses different targets from the flood probe so the two can be compared.
+
+Strategy 2 — TCP flood probe (every 10ms)
+Holds one persistent TCP connection open to 1.1.1.1:53 and sends a DNS query every 10ms — exactly like Eve Online holds its game connection. The moment the NAT table is flushed, this connection dies and the alarm fires.
+The smoking gun — NAT flush confirmation:
+
+When the flood probe dies with a TIMEOUT (no response at all) but a fresh connection to 8.8.8.8 succeeds at the same moment, it logs:
+
+🔥 NAT FLUSH CONFIRMED — flood TIMEOUT, fresh TCP to 8.8.8.8 OK
+
+This is definitive proof: the internet was fine, only existing connections were killed.
+Drop reason classification — not every flood drop is a NAT flush:
+
+TIMEOUT → real NAT flush → red alarm → 🔥
+SERVER_RST → Cloudflare closed an idle connection normally → harmless → yellow notice
+
+netwatch_analyse.py — the analyser
+Run this against your log files to get a plain-text report. Streams files line by line so it handles 1 GB+ logs safely with a progress bar. Produces a Delta Fiber support ticket summary at the end with all the evidence laid out.
+README.md — full documentation
+Everything documented: all options, output files, how to interpret the events, known limitations.
+
+Key things we learned along the way
+DiscoveryWhat changedMonitor was on the same laptop as Eve — both should have crashedProved the problem is NOT a full internet outage but a NAT flush specificallySpeaker never disconnected from Wi-Fi, just its audio stream diedEliminated Wi-Fi and router as causesPS5 also crashed simultaneouslyEliminated device-specific issuesWAN IP stable for weeksEliminated DHCP renewal / ISP reconnectHappens at the same time daily (12:37, 15:30)Points to a scheduled automated process on Delta Fiber's networkMonitor showed 100% availability during crashesConfirmed new connections work fine; only existing ones dieQuad9 kept timing outRemoved from probe targets — security filtering causes false alarmsOne 1000ms spike caused 20+ "HIGH JITTER" warningsFixed with outlier-aware jitter calculation (excludes samples >10× the mean)SERVER_RST drops fired hundreds of false NAT_FLUSH_CONFIRMEDFixed: only TIMEOUT drops trigger the NAT flush alarm
+
+What to do next
+Run the analyser on today's logs to generate your Delta Fiber report:
+bashpython3 netwatch_analyse.py
+Send the report to Delta Fiber. The key points for the ticket:
+
+Persistent TCP connection loses all connectivity for 5–7 seconds
+Gateway remains reachable throughout (router is fine)
+All other targets continue working via fresh connections
+Occurs at approximately 15:30 daily — same times on multiple consecutive days
+Affects all devices simultaneously — wired and wireless
+Consistent with a scheduled configuration push, route table refresh, or NAT session table flush on their network equipment
+
+Keep monitoring. Each new event adds more timestamps to the pattern, making the evidence stronger.
