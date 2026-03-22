@@ -10,6 +10,8 @@ but left the router and a standard connectivity check completely unaffected.
 The monitor proved the cause: periodic NAT state table flushes on upstream
 network equipment.
 
+Special thanks to Claude.ai
+
 ---
 
 ## Requirements
