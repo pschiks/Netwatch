@@ -166,7 +166,6 @@ PROBE_TARGETS = [
 
 # App-specific probe targets (used as suggestion / fallback if no --app-host given)
 APP_PROBE_SUGGESTIONS = [
-    ("login.eveonline.com", 443, "Eve Online"),
     ("api.twitch.tv",       443, "Twitch"),
     ("clients3.google.com", 443, "Google"),
 ]
