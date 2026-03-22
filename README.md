@@ -1,4 +1,4 @@
-# netwatch v9
+# netwatch
 
 A multi-layer network connection monitor for diagnosing intermittent internet
 problems — particularly the kind that crash online games and drop streaming
