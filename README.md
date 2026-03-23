@@ -34,7 +34,7 @@ python3 netwatch9.py --path-trace --traceroute --sound-profile urgent
 
 # Full setup for gaming/streaming diagnosis
 python3 netwatch9.py \
-  --app-host login.eveonline.com --app-label "Eve" \
+  --app-host clients3.google.com --app-label "Google" \
   --wifi --wifi-warn -70 \
   --path-trace --traceroute \
   --sound-profile urgent
