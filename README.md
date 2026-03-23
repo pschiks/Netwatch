@@ -5,7 +5,7 @@ problems — particularly the kind that crash online games and drop streaming
 audio while a standard ping test shows nothing wrong.
 
 Originally written to investigate recurring connection drops on a Delta Fiber
-(Netherlands) residential connection that crashed Eve Online and audio streaming
+(Netherlands) residential connection that crashed Online gaming and audio streaming
 but left the router and a standard connectivity check completely unaffected.
 The monitor proved the cause: periodic NAT state table flushes on upstream
 network equipment.
